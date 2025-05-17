@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const pool = require('../config/db');
+const sanitizePagination = require('../utils/pagination');
 
 const getProfile = async (req, res) => {
   const userId = req.user.id;
@@ -58,8 +59,9 @@ const updateProfile = async (req, res) => {
 };
 
 const getUsers = async (req, res) => {
-  const { page = 1, limit = 10, search = '' } = req.query;
-  const offset = (page - 1) * limit;  
+  const { search = '' } = req.query;
+  const { page, limit, offset } = sanitizePagination(req.query);
+ 
   try {
     const searchQuery = `%${search}%`;
     const countResult = await pool.query(

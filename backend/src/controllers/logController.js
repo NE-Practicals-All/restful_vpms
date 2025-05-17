@@ -1,9 +1,11 @@
 const pool = require('../config/db');
+const sanitizePagination = require('../utils/pagination');
 
 const getLogs = async (req, res) => {
   const userId = req.user.id;
-  const { page = 1, limit = 10, search = '' } = req.query;
-  const offset = (page - 1) * limit;
+  const { search = '' } = req.query;
+  const { page, limit, offset } = sanitizePagination(req.query);
+
 
   if (req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Admin access required' });
@@ -14,7 +16,7 @@ const getLogs = async (req, res) => {
     const query = `
       SELECT * FROM logs
       WHERE action ILIKE $1 OR user_id::text ILIKE $1
-      ORDER BY created_at DESC
+      ORDER BY timestamp DESC
       LIMIT $2 OFFSET $3
     `;
     const countQuery = `

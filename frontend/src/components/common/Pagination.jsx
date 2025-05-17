@@ -17,31 +17,43 @@ const Pagination = ({ meta, setPage }) => {
   }
 
   return (
-    <div className="flex justify-between items-center mt-4">
+    <div className="flex justify-between items-center mt-6">
       <button
         onClick={() => setPage((p) => Math.max(p - 1, 1))}
         disabled={currentPage === 1}
-        className="btn-secondary disabled:bg-gray-300"
+        className={`px-4 py-2 rounded-lg font-medium transition-all ${
+          currentPage === 1
+            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            : 'bg-secondary text-white hover:bg-green-700'
+        }`}
       >
         Previous
       </button>
+
       <div className="flex space-x-2">
         {pages.map((page) => (
           <button
             key={page}
             onClick={() => setPage(page)}
-            className={`px-3 py-1 rounded ${
-              page === currentPage ? 'bg-primary text-white' : 'bg-gray-200 hover:bg-gray-300'
+            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+              page === currentPage
+                ? 'bg-primary text-white'
+                : 'bg-accent text-primary hover:bg-green-200'
             }`}
           >
             {page}
           </button>
         ))}
       </div>
+
       <button
         onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
         disabled={currentPage === totalPages}
-        className="btn-secondary disabled:bg-gray-300"
+        className={`px-4 py-2 rounded-lg font-medium transition-all ${
+          currentPage === totalPages
+            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            : 'bg-secondary text-white hover:bg-green-700'
+        }`}
       >
         Next
       </button>

@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const { sendApprovalEmail, sendRejectionEmail } = require('../utils/email');
+const sanitizePagination = require('../utils/pagination');
 
 const createRequest = async (req, res) => {
   const userId = req.user.id;
@@ -30,8 +31,8 @@ const createRequest = async (req, res) => {
 
 const getRequests = async (req, res) => {
   const userId = req.user.id;
-  const { page = 1, limit = 10, search = '' } = req.query;
-  const offset = (page - 1) * limit;
+  const { search = '' } = req.query;
+  const { page, limit, offset } = sanitizePagination(req.query);
   const isAdmin = req.user.role === 'admin';
   try {
     const searchQuery = `%${search}%`;

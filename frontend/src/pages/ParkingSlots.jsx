@@ -191,7 +191,7 @@ const ParkingSlots = () => {
           className="btn-primary"
           disabled={isCreating}
         >
-          {isCreating ? 'Creating...' : 'Create Bulk Slots'}
+          {isCreating ? 'Creating...' : 'Create Slots'}
         </button>
       </div>
 

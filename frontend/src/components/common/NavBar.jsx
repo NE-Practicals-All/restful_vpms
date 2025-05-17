@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { removeToken } from '../../utils/auth';
+import { LogOut } from 'lucide-react';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -11,25 +12,29 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-primary text-white p-4 shadow-md">
-      <div className="container mx-auto flex justify-between items-center">
-        <Link to="/dashboard" className="text-xl font-bold">
-          Parking Admin
+    <nav className="bg-primary text-white shadow-lg">
+      <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+        {/* Logo / Title */}
+        <Link to="/dashboard" className="text-2xl font-semibold tracking-wide hover:text-accent transition-colors">
+          🚗 Parking Admin
         </Link>
-        <div className="space-x-4">
-          <Link to="/dashboard" className="hover:text-accent">
+
+        {/* Navigation Links */}
+        <div className="hidden md:flex items-center space-x-6">
+          <Link to="/dashboard" className="hover:text-accent font-medium transition-colors">
             Dashboard
           </Link>
-          <Link to="/slot-requests" className="hover:text-accent">
+          <Link to="/slot-requests" className="hover:text-accent font-medium transition-colors">
             Slot Requests
           </Link>
-          <Link to="/logs" className="hover:text-accent">
+          <Link to="/logs" className="hover:text-accent font-medium transition-colors">
             Logs
           </Link>
           <button
             onClick={handleLogout}
-            className="bg-secondary px-3 py-1 rounded hover:bg-blue-600"
+            className="bg-secondary hover:bg-[#16a34a] text-white flex items-center px-4 py-2 rounded-xl transition-all duration-200"
           >
+            <LogOut className="w-4 h-4 mr-2" />
             Logout
           </button>
         </div>

@@ -10,8 +10,8 @@ generatePassword();
 
 // INSERT INTO users (name, email, password, role)
 // VALUES (
-//   'Admin User',
+//   'Celia Ineza',
 //   'admin@park.com',
-//   '$2b$10$wKpnPGCaNT.PV0ytMenvOOnKMh60DYh31nDv3EyECvWb3WbR.7fTW',
+//   '$2b$10$qSRacNTaBOEQRJZrt6C2auBKkgGCrvvzRQbQsnzpg.c1Pv4fm/cuO',
 //   'admin'
 // );

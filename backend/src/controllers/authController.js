@@ -3,36 +3,45 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { sendOtpEmail } = require('../utils/email');
 
+
 const register = async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
+    // Check if email already exists
     const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (userResult.rowCount > 0) {
       return res.status(400).json({ error: 'Email already exists' });
     }
 
+    // Ensure only one admin
     const adminResult = await pool.query('SELECT COUNT(*) FROM users WHERE role = $1', ['admin']);
     if (adminResult.rows[0].count > 0) {
       console.log('Admin already exists, only user role allowed');
     }
 
+    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString(); 
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000)
 
+    // Insert user into database first
     const result = await pool.query(
       'INSERT INTO users (name, email, password, role, is_verified) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [name, email, hashedPassword, 'user', false]
     );
 
-    const user = result.rows[0];
+    const user = result.rows[0]; // Now we have user.id
 
+    // Generate OTP and expiration
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+
+    // Insert OTP into otps table
     await pool.query(
-      'INSERT INTO otps (user_id, otp_code, expires_at) VALUES ($1, $2, $3)',
-      [user.id, otpCode, expiresAt]
+      'INSERT INTO otps (user_id, email, otp_code, expires_at) VALUES ($1, $2, $3, $4)',
+      [user.id, email, otpCode, expiresAt]
     );
 
+    // Send OTP email
     try {
       await sendOtpEmail(email, otpCode);
       console.log('OTP email sent to:', email);
@@ -42,11 +51,14 @@ const register = async (req, res) => {
     }
 
     res.status(201).json({ message: 'User registered, OTP sent to email', userId: user.id });
+
   } catch (error) {
     console.error('Register error:', error);
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
+
+
 
 const verifyOtp = async (req, res) => {
   const { userId, otpCode } = req.body;
@@ -158,7 +170,7 @@ const login = async (req, res) => {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '3h' }
     );
 
     await pool.query('INSERT INTO logs (user_id, action) VALUES ($1, $2)', [

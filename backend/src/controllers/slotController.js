@@ -1,39 +1,70 @@
 const pool = require('../config/db');
+const sanitizePagination = require('../utils/pagination');
+
 
 const bulkCreateSlots = async (req, res) => {
   const userId = req.user.id;
-  const { slots } = req.body; 
+  const { slots } = req.body;
+
   try {
-    const values = slots.map(
+    const inputSlotNumbers = slots.map((slot) => slot.slot_number);
+    const placeholders = inputSlotNumbers.map((_, i) => `$${i + 1}`).join(', ');
+
+    // 1. Check for existing slots
+    const existingQuery = `SELECT slot_number FROM parking_slots WHERE slot_number IN (${placeholders})`;
+    const existingResult = await pool.query(existingQuery, inputSlotNumbers);
+    const existingSlotNumbers = existingResult.rows.map(row => row.slot_number);
+
+    // 2. Filter out existing slots
+    const newSlots = slots.filter(slot => !existingSlotNumbers.includes(slot.slot_number));
+
+    if (newSlots.length === 0) {
+      return res.status(400).json({
+        error: `All provided slot numbers already exist: ${existingSlotNumbers.join(', ')}`,
+      });
+    }
+
+    // 3. Insert new slots
+    const values = newSlots.map(
       (slot, index) =>
         `($${index * 4 + 1}, $${index * 4 + 2}, $${index * 4 + 3}, $${index * 4 + 4})`
     );
-    const query = `
+    const insertQuery = `
       INSERT INTO parking_slots (slot_number, size, vehicle_type, location)
       VALUES ${values.join(', ')}
       RETURNING *
     `;
-    const flatValues = slots.flatMap((slot) => [
+    const flatValues = newSlots.flatMap(slot => [
       slot.slot_number,
       slot.size,
       slot.vehicle_type,
       slot.location,
     ]);
-    const result = await pool.query(query, flatValues);
+    const insertResult = await pool.query(insertQuery, flatValues);
 
+    // 4. Log the action
     await pool.query('INSERT INTO logs (user_id, action) VALUES ($1, $2)', [
       userId,
-      `Bulk created ${slots.length} slots`,
+      `Bulk created ${insertResult.rowCount} slots`,
     ]);
-    res.status(201).json(result.rows);
+
+    // 5. Respond
+    res.status(201).json({
+      message: `Created ${insertResult.rowCount} slots. Skipped ${slots.length - insertResult.rowCount} existing slots.`,
+      inserted: insertResult.rows,
+      skipped: existingSlotNumbers,
+    });
+
   } catch (error) {
-    res.status(400).json({ error: 'Slot number already exists or server error' });
+    console.error('Bulk create error:', error); // Helpful for debugging
+    res.status(500).json({ error: 'Server error during bulk slot creation' });
   }
 };
 
 const getSlots = async (req, res) => {
-  const { page = 1, limit = 10, search = '' } = req.query;
-  const offset = (page - 1) * limit;
+  const { search = '' } = req.query;
+  const { page, limit, offset } = sanitizePagination(req.query);
+
   const isAdmin = req.user.role === 'admin';
   try {
     const searchQuery = `%${search}%`;

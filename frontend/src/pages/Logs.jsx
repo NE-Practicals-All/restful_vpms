@@ -64,7 +64,7 @@ const Logs = () => {
                   <td className="p-3">{log.id}</td>
                   <td className="p-3">{log.user_id}</td>
                   <td className="p-3">{log.action}</td>
-                  <td className="p-3">{new Date(log.created_at).toLocaleString()}</td>
+                  <td className="p-3">{new Date(log.timestamp.replace(' ', 'T')).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
